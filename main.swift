@@ -1,3 +1,11 @@
+//
+//  main.swift
+//  swiftTutorialForBeginer
+//
+//  Created by 川内翔一朗 on 2018/12/21.
+//  Copyright © 2018 川内翔一朗. All rights reserved.
+//
+
 import Foundation
 
 
@@ -5,6 +13,19 @@ let first: String = """
 .intel_syntax noprefix
 .global main
 """
+enum Value {
+    case TK_NUM
+    case TK_EOF
+    case PLUS
+    case MINUS
+}
+struct Token {
+    var ty: Value
+    var val: Int = 0
+    var input: String
+}
+
+
 enum NextOperator {
     case plus
     case minus
@@ -17,41 +38,68 @@ func main() -> Int {
 
     let code: String = argv[1]
 
-
-    var nextOperator: NextOperator = .first
-
     print(first)
 
     print("main:")
-    let token = parse(code)
+    let parsedCode = parse(code)
 
-    for p in token {
-        if p == "+" {
-            nextOperator = .plus
+    let tokens = tokenize(parsedCode)
+
+
+    var i: Int = 0
+
+    while tokens[i].ty != .TK_EOF {
+        if i == 0 {
+            print("\tmov rax, \(tokens[i].val)")
+            i += 1
             continue
         }
-        if p == "-" {
-            nextOperator = .minus
+
+        if tokens[i].ty == .PLUS {
+            i += 1
+            print("\tadd rax, \(tokens[i].val)")
+            i += 1
             continue
         }
-        switch nextOperator {
-        case .plus:
-            print("\tadd rax, \(p)")
-        case .minus:
-            print("\tsub rax, \(p)")
-        case .unknown:
-            print("予期せぬ値です")
-        case .first:
-            print("\tmov rax, \(p)")
+        if tokens[i].ty == .MINUS {
+            i += 1
+            print("\tsub rax, \(tokens[i].val)")
+            i += 1
+            continue
         }
     }
 
     print("\tret")
 
 
+
     return 0
 }
 
+func tokenize(_ token: [String]) -> [Token] {
+    var tokens: [Token] = []
+    for t in token {
+        if t == "+" {
+            let plusToken = Token(ty: Value.PLUS, val: 0, input: t)
+            tokens.append(plusToken)
+            continue
+        }
+        if t == "-" {
+            let minusToken = Token(ty: Value.MINUS, val: 0, input: t)
+            tokens.append(minusToken)
+            continue
+        }
+        if let tInt: Int = Int(t) {
+            let intToken = Token(ty: Value.TK_NUM, val: tInt, input: t)
+            tokens.append(intToken)
+            continue
+        }
+
+    }
+    let fin = Token(ty: Value.TK_EOF, val: 0, input: "EOF")
+    tokens.append(fin)
+    return tokens
+}
 func parse(_ code: String) -> [String] {
 
 
@@ -72,3 +120,6 @@ func parse(_ code: String) -> [String] {
 }
 //返り値を取らないとwarningが出ます
 _ = main()
+
+
+
